@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💕 我爱你，武晓彤 💕</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #0a0a0f;
+            font-family: 'Noto Sans SC', sans-serif;
+            height: 100vh;
+            perspective: 800px;
+            perspective-origin: 50% 50%;
+        }
+        
+        /* 星空背景 */
+        .starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite ease-in-out;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        /* 网格地面 */
+        .grid-floor {
+            position: fixed;
+            bottom: 0;
+            left: -50%;
+            width: 200%;
+            height: 40%;
+            background: 
+                linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: rotateX(60deg);
+            transform-origin: top;
+            animation: gridMove 2s linear infinite;
+            z-index: 1;
+        }
+        
+        @keyframes gridMove {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 50px; }
+        }
+        
+        /* 主容器 */
+        .container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            z-index: 10;
+        }
+        
+        /* 飞行文字 */
+        .flying-text {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) translateZ(var(--z));
+            font-size: clamp(24px, 5vw, 60px);
+            font-weight: 900;
+            white-space: nowrap;
+            animation: flyThrough var(--duration) linear infinite;
+            animation-delay: var(--delay);
+            text-shadow: 
+                0 0 10px var(--glow-color),
+                0 0 20px var(--glow-color),
+                0 0 40px var(--glow-color),
+                0 0 80px var(--glow-color);
+            color: var(--text-color);
+            opacity: 0;
+            z-index: 100;
+        }
+        
+        @keyframes flyThrough {
+            0% {
+                transform: translate(-50%, -50%) translateZ(-2000px) scale(0.1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            85% {
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) translateZ(500px) scale(3);
+                opacity: 0;
+            }
+        }
+        
+        /* 粒子轨迹 */
+        .particle-trail {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: linear-gradient(to right, #ff00ff, #00ffff);
+            border-radius: 50%;
+            animation: particleFly 3s linear infinite;
+            animation-delay: var(--delay);
+            box-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+        }
+        
+        @keyframes particleFly {
+            0% {
+                transform: translateZ(-2000px) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateZ(500px) scale(2);
+                opacity: 0;
+            }
+        }
+        
+        /* 中心光晕 */
+        .center-glow {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 0, 128, 0.3) 0%, transparent 70%);
+            animation: pulseGlow 3s ease-in-out infinite;
+            z-index: 2;
+        }
+        
+        @keyframes pulseGlow {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 0.8; }
+        }
+        
+        /* 侧边霓虹线条 */
+        .neon-line {
+            position: fixed;
+            background: linear-gradient(to bottom, transparent, #00ffff, transparent);
+            width: 2px;
+            height: 100%;
+            animation: neonPulse 2s ease-in-out infinite;
+            z-index: 3;
+        }
+        
+        .neon-line.left { left: 10%; }
+        .neon-line.right { right: 10%; }
+        
+        .neon-line.right {
+            background: linear-gradient(to bottom, transparent, #ff00ff, transparent);
+            animation-delay: 1s;
+        }
+        
+        @keyframes neonPulse {
+            0%, 100% { opacity: 0.3; filter: blur(2px); }
+            50% { opacity: 1; filter: blur(0px); }
+        }
+        
+        /* 底部文字 */
+        .bottom-text {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 4px;
+            z-index: 100;
+            text-transform: uppercase;
+        }
+        
+        /* 心跳图标 */
+        .heart {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            animation: heartbeat 1s ease-in-out infinite;
+            z-index: 100;
+            filter: drop-shadow(0 0 10px #ff0066) drop-shadow(0 0 20px #ff0066);
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.2); }
+        }
+        
+        /* 速度线 */
+        .speed-line {
+            position: fixed;
+            width: 2px;
+            background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.8), transparent);
+            animation: speedDash 0.5s linear infinite;
+            z-index: 4;
+        }
+        
+        @keyframes speedDash {
+            0% {
+                transform: translateY(-100%);
+            }
+            100% {
+                transform: translateY(100vh);
+            }
+        }
+        
+        /* 扫描线效果 */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 255, 0.03) 2px,
+                rgba(0, 255, 255, 0.03) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        /* 角落装饰 */
+        .corner {
+            position: fixed;
+            width: 80px;
+            height: 80px;
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            z-index: 50;
+        }
+        
+        .corner.top-left {
+            top: 20px;
+            left: 20px;
+            border-right: none;
+            border-bottom: none;
+        }
+        
+        .corner.top-right {
+            top: 20px;
+            right: 20px;
+            border-left: none;
+            border-bottom: none;
+        }
+        
+        .corner.bottom-left {
+            bottom: 20px;
+            left: 20px;
+            border-right: none;
+            border-top: none;
+        }
+        
+        .corner.bottom-right {
+            bottom: 20px;
+            right: 20px;
+            border-left: none;
+            border-top: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 扫描线 -->
+    <div class="scanline"></div>
+    
+    <!-- 星空背景 -->
+    <div class="starfield" id="starfield"></div>
+    
+    <!-- 网格地面 -->
+    <div class="grid-floor"></div>
+    
+    <!-- 中心光晕 -->
+    <div class="center-glow"></div>
+    
+    <!-- 霓虹线条 -->
+    <div class="neon-line left"></div>
+    <div class="neon-line right"></div>
+    
+    <!-- 角落装饰 -->
+    <div class="corner top-left"></div>
+    <div class="corner top-right"></div>
+    <div class="corner bottom-left"></div>
+    <div class="corner bottom-right"></div>
+    
+    <!-- 心跳图标 -->
+    <div class="heart">💗</div>
+    
+    <!-- 飞行文字容器 -->
+    <div class="container" id="container"></div>
+    
+    <!-- 粒子轨迹 -->
+    <div class="particle-trail" id="particles"></div>
+    
+    <!-- 速度线容器 -->
+    <div id="speedLines"></div>
+    
+    <!-- 底部文字 -->
+    <div class="bottom-text">∞ Forever Love ∞</div>
+    
+    <script>
+        // 配置
+        const messages = [
+            '我爱你',
+            '武晓彤',
+            '❤️',
+            '永远爱你',
+            '武晓彤',
+            '💕',
+            '你是我的唯一',
+            '武晓彤',
+            '💗',
+            '我爱你，武晓彤',
+            '✨',
+            '一生一世',
+        ];
+        
+        const colors = [
+            { text: '#ff0066', glow: '#ff0066' },
+            { text: '#00ffff', glow: '#00ffff' },
+            { text: '#ff00ff', glow: '#ff00ff' },
+            { text: '#ffff00', glow: '#ffff00' },
+            { text: '#00ff88', glow: '#00ff88' },
+            { text: '#ff6600', glow: '#ff6600' },
+        ];
+        
+        // 创建星空
+        function createStarfield() {
+            const starfield = document.getElementById('starfield');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                star.style.width = Math.random() * 2 + 1 + 'px';
+                star.style.height = star.style.width;
+                starfield.appendChild(star);
+            }
+        }
+        
+        // 创建飞行文字
+        function createFlyingText() {
+            const container = document.getElementById('container');
+            let index = 0;
+            
+            function addText() {
+                const text = document.createElement('div');
+                text.className = 'flying-text';
+                text.textContent = messages[index % messages.length];
+                
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const duration = 4 + Math.random() * 2; // 4-6秒
+                const offsetX = (Math.random() - 0.5) * 30; // 随机水平偏移
+                const offsetY = (Math.random() - 0.5) * 30; // 随机垂直偏移
+                
+                text.style.setProperty('--text-color', color.text);
+                text.style.setProperty('--glow-color', color.glow);
+                text.style.setProperty('--duration', duration + 's');
+                text.style.setProperty('--delay', '0s');
+                text.style.setProperty('--z', '-2000px');
+                text.style.left = `calc(50% + ${offsetX}vw)`;
+                text.style.top = `calc(50% + ${offsetY}vh)`;
+                
+                container.appendChild(text);
+                
+                // 动画结束后移除
+                setTimeout(() => {
+                    text.remove();
+                }, duration * 1000);
+                
+                index++;
+            }
+            
+            // 初始创建多个文字，错开时间
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => addText(), i * 800);
+            }
+            
+            // 持续创建新文字
+            setInterval(addText, 800);
+        }
+        
+        // 创建粒子
+        function createParticles() {
+            const container = document.getElementById('particles');
+            
+            function addParticle() {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.setProperty('--delay', '0s');
+                
+                container.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.remove();
+                }, 3000);
+            }
+            
+            setInterval(addParticle, 100);
+        }
+        
+        // 创建速度线
+        function createSpeedLines() {
+            const container = document.getElementById('speedLines');
+            
+            function addLine() {
+                const line = document.createElement('div');
+                line.className = 'speed-line';
+                line.style.left = Math.random() * 100 + '%';
+                line.style.height = 50 + Math.random() * 100 + 'px';
+                line.style.animationDuration = 0.3 + Math.random() * 0.4 + 's';
+                line.style.opacity = 0.1 + Math.random() * 0.3;
+                
+                container.appendChild(line);
+                
+                setTimeout(() => {
+                    line.remove();
+                }, 1000);
+            }
+            
+            setInterval(addLine, 50);
+        }
+        
+        // 初始化
+        createStarfield();
+        createFlyingText();
+        createParticles();
+        createSpeedLines();
+        
+        // 添加鼠标移动视差效果
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            
+            document.querySelector('.center-glow').style.transform = 
+                `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+        });
+    </script>
+</body>
+</html>
