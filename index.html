@@ -384,16 +384,35 @@
         function createFlyingText() {
             const container = document.getElementById('container');
             let index = 0;
-            
+            const activePositions = []; // 跟踪活跃文字的位置
+
+            // 检查新位置是否与其他活跃文字太近
+            function isPositionTooClose(x, y) {
+                const minDistance = 15; // 最小距离15vw/vh
+                return activePositions.some(pos => {
+                    const distance = Math.sqrt(Math.pow(x - pos.x, 2) + Math.pow(y - pos.y, 2));
+                    return distance < minDistance;
+                });
+            }
+
             function addText() {
                 const text = document.createElement('div');
                 text.className = 'flying-text';
                 text.textContent = messages[index % messages.length];
-                
+
                 const color = colors[Math.floor(Math.random() * colors.length)];
                 const duration = 4 + Math.random() * 2; // 4-6秒
-                const offsetX = (Math.random() - 0.5) * 30; // 随机水平偏移
-                const offsetY = (Math.random() - 0.5) * 30; // 随机垂直偏移
+
+                // 生成合适的位置，避免与其他文字太近
+                let offsetX, offsetY, attempts = 0;
+                do {
+                    offsetX = (Math.random() - 0.5) * 50; // 随机水平偏移 (±25vw)
+                    offsetY = (Math.random() - 0.5) * 50; // 随机垂直偏移 (±25vh)
+                    attempts++;
+                } while (attempts < 20 && isPositionTooClose(offsetX, offsetY));
+
+                // 将位置添加到活跃位置数组
+                activePositions.push({ x: offsetX, y: offsetY, element: text });
                 
                 text.style.setProperty('--text-color', color.text);
                 text.style.setProperty('--glow-color', color.glow);
@@ -408,6 +427,11 @@
                 // 动画结束后移除
                 setTimeout(() => {
                     text.remove();
+                    // 从活跃位置数组中移除
+                    const posIndex = activePositions.findIndex(pos => pos.element === text);
+                    if (posIndex > -1) {
+                        activePositions.splice(posIndex, 1);
+                    }
                 }, duration * 1000);
                 
                 index++;
@@ -415,11 +439,11 @@
             
             // 初始创建多个文字，错开时间
             for (let i = 0; i < 5; i++) {
-                setTimeout(() => addText(), i * 800);
+                setTimeout(() => addText(), i * 1200);
             }
-            
+
             // 持续创建新文字
-            setInterval(addText, 800);
+            setInterval(addText, 1200);
         }
         
         // 创建粒子
