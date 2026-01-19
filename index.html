@@ -90,11 +90,15 @@
             white-space: nowrap;
             animation: flyThrough var(--duration) linear infinite;
             animation-delay: var(--delay);
-            text-shadow: 
+            text-shadow:
+                0 0 5px var(--glow-color),
                 0 0 10px var(--glow-color),
+                0 0 15px var(--glow-color),
                 0 0 20px var(--glow-color),
-                0 0 40px var(--glow-color),
-                0 0 80px var(--glow-color);
+                0 2px 5px rgba(0,0,0,0.3),
+                0 4px 10px rgba(0,0,0,0.2),
+                0 1px 0 rgba(255,255,255,0.5),
+                0 -1px 0 rgba(0,0,0,0.7);
             color: var(--text-color);
             opacity: 0;
             z-index: 100;
@@ -116,6 +120,43 @@
                 opacity: 0;
             }
         }
+
+        /* 文字渐变动画 */
+        @keyframes colorGradient1 {
+            0% { color: #ff0066; }
+            25% { color: #ff6600; }
+            50% { color: #ffff00; }
+            75% { color: #00ff88; }
+            100% { color: #ff0066; }
+        }
+
+        @keyframes colorGradient2 {
+            0% { color: #00ffff; }
+            25% { color: #0088ff; }
+            50% { color: #8800ff; }
+            75% { color: #ff0088; }
+            100% { color: #00ffff; }
+        }
+
+        @keyframes colorGradient3 {
+            0% { color: #ff00ff; }
+            25% { color: #ff8800; }
+            50% { color: #88ff00; }
+            75% { color: #00ff88; }
+            100% { color: #ff00ff; }
+        }
+
+        .flying-text.gradient-1 {
+            animation: flyThrough var(--duration) linear infinite, colorGradient1 var(--duration) linear infinite;
+        }
+
+        .flying-text.gradient-2 {
+            animation: flyThrough var(--duration) linear infinite, colorGradient2 var(--duration) linear infinite;
+        }
+
+        .flying-text.gradient-3 {
+            animation: flyThrough var(--duration) linear infinite, colorGradient3 var(--duration) linear infinite;
+        }
         
         /* 粒子轨迹 */
         .particle-trail {
@@ -130,13 +171,74 @@
         
         .particle {
             position: absolute;
-            width: 4px;
-            height: 4px;
-            background: linear-gradient(to right, #ff00ff, #00ffff);
-            border-radius: 50%;
             animation: particleFly 3s linear infinite;
             animation-delay: var(--delay);
-            box-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+        }
+
+        /* 圆形粒子 */
+        .particle.circle {
+            width: var(--size);
+            height: var(--size);
+            background: linear-gradient(45deg, var(--color1), var(--color2));
+            border-radius: 50%;
+            box-shadow:
+                0 0 5px var(--color1),
+                0 0 10px var(--color2),
+                0 0 15px rgba(255, 255, 255, 0.3);
+        }
+
+        /* 方形粒子 */
+        .particle.square {
+            width: var(--size);
+            height: var(--size);
+            background: linear-gradient(45deg, var(--color1), var(--color2));
+            border-radius: 2px;
+            box-shadow:
+                0 0 5px var(--color1),
+                0 0 10px var(--color2);
+            animation: particleFly 3s linear infinite, particleRotate 2s linear infinite;
+        }
+
+        /* 星形粒子 */
+        .particle.star {
+            width: var(--size);
+            height: var(--size);
+            background: transparent;
+            position: relative;
+        }
+
+        .particle.star::before {
+            content: '✨';
+            font-size: var(--size);
+            color: var(--color1);
+            text-shadow:
+                0 0 5px var(--color1),
+                0 0 10px var(--color2),
+                0 0 15px rgba(255, 255, 255, 0.5);
+            animation: particleTwinkle 1.5s ease-in-out infinite;
+        }
+
+        /* 三角形粒子 */
+        .particle.triangle {
+            width: 0;
+            height: 0;
+            border-left: calc(var(--size) / 2) solid transparent;
+            border-right: calc(var(--size) / 2) solid transparent;
+            border-bottom: var(--size) solid var(--color1);
+            filter: drop-shadow(0 0 5px var(--color1)) drop-shadow(0 0 10px var(--color2));
+            animation: particleFly 3s linear infinite, particleRotate 3s linear infinite;
+        }
+
+        /* 粒子旋转动画 */
+        @keyframes particleRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 粒子闪烁动画 */
+        @keyframes particleTwinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
         }
         
         @keyframes particleFly {
@@ -380,11 +482,79 @@
             }
         }
         
+        // 配置常量
+        const CONFIG = {
+            MAX_FLYING_TEXT: 12,   // 最大飞行文字数量
+            MAX_PARTICLES: 30,     // 最大粒子数量
+            MAX_SPEED_LINES: 20,   // 最大速度线数量
+            FLYING_TEXT_INTERVAL: 1200, // 飞行文字创建间隔(ms)
+            PARTICLE_INTERVAL: 100,     // 粒子创建间隔(ms)
+            SPEED_LINE_INTERVAL: 50,    // 速度线创建间隔(ms)
+        };
+
+        // 动画管理器 - 使用requestAnimationFrame优化性能
+        class AnimationManager {
+            constructor() {
+                this.animations = new Map();
+                this.lastTime = 0;
+                this.isRunning = false;
+            }
+
+            // 添加动画
+            add(id, callback, interval) {
+                this.animations.set(id, {
+                    callback,
+                    interval,
+                    lastExecution: 0
+                });
+            }
+
+            // 移除动画
+            remove(id) {
+                this.animations.delete(id);
+            }
+
+            // 开始动画循环
+            start() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this.lastTime = performance.now();
+                this.animate(this.lastTime);
+            }
+
+            // 停止动画循环
+            stop() {
+                this.isRunning = false;
+            }
+
+            // 动画循环
+            animate = (currentTime) => {
+                if (!this.isRunning) return;
+
+                const deltaTime = currentTime - this.lastTime;
+                this.lastTime = currentTime;
+
+                // 执行需要运行的动画
+                for (const [id, animation] of this.animations) {
+                    animation.lastExecution += deltaTime;
+                    if (animation.lastExecution >= animation.interval) {
+                        animation.callback();
+                        animation.lastExecution -= animation.interval; // 减去interval而不是重置为0，处理累积误差
+                    }
+                }
+
+                requestAnimationFrame(this.animate);
+            };
+        }
+
+        const animationManager = new AnimationManager();
+
         // 创建飞行文字
         function createFlyingText() {
             const container = document.getElementById('container');
             let index = 0;
             const activePositions = []; // 跟踪活跃文字的位置
+            const activeTexts = new Set(); // 跟踪活跃文字元素
 
             // 检查新位置是否与其他活跃文字太近
             function isPositionTooClose(x, y) {
@@ -396,8 +566,14 @@
             }
 
             function addText() {
+                // 检查是否达到最大数量限制
+                if (activeTexts.size >= CONFIG.MAX_FLYING_TEXT) {
+                    return; // 达到限制，跳过创建
+                }
+
                 const text = document.createElement('div');
-                text.className = 'flying-text';
+                const gradientType = Math.floor(Math.random() * 3) + 1; // 随机选择渐变类型 1-3
+                text.className = `flying-text gradient-${gradientType}`;
                 text.textContent = messages[index % messages.length];
 
                 const color = colors[Math.floor(Math.random() * colors.length)];
@@ -413,7 +589,8 @@
 
                 // 将位置添加到活跃位置数组
                 activePositions.push({ x: offsetX, y: offsetY, element: text });
-                
+                activeTexts.add(text); // 添加到活跃文字集合
+
                 text.style.setProperty('--text-color', color.text);
                 text.style.setProperty('--glow-color', color.glow);
                 text.style.setProperty('--duration', duration + 's');
@@ -427,11 +604,12 @@
                 // 动画结束后移除
                 setTimeout(() => {
                     text.remove();
-                    // 从活跃位置数组中移除
+                    // 从活跃位置数组和集合中移除
                     const posIndex = activePositions.findIndex(pos => pos.element === text);
                     if (posIndex > -1) {
                         activePositions.splice(posIndex, 1);
                     }
+                    activeTexts.delete(text); // 从活跃文字集合中移除
                 }, duration * 1000);
                 
                 index++;
@@ -439,54 +617,92 @@
             
             // 初始创建多个文字，错开时间
             for (let i = 0; i < 5; i++) {
-                setTimeout(() => addText(), i * 1200);
+                setTimeout(() => addText(), i * CONFIG.FLYING_TEXT_INTERVAL);
             }
 
-            // 持续创建新文字
-            setInterval(addText, 1200);
+            // 使用动画管理器持续创建新文字
+            animationManager.add('flyingText', addText, CONFIG.FLYING_TEXT_INTERVAL);
+
+            // 临时调试：同时使用setInterval确保功能正常
+            setInterval(addText, CONFIG.FLYING_TEXT_INTERVAL);
         }
         
         // 创建粒子
         function createParticles() {
             const container = document.getElementById('particles');
-            
+            const activeParticles = new Set(); // 跟踪活跃粒子
+
+            // 粒子类型配置
+            const particleTypes = ['circle', 'square', 'star', 'triangle'];
+            const particleColors = [
+                { color1: '#ff00ff', color2: '#00ffff' },
+                { color1: '#ff6600', color2: '#ffff00' },
+                { color1: '#00ff88', color2: '#0088ff' },
+                { color1: '#ff0066', color2: '#8800ff' },
+                { color1: '#ff00ff', color2: '#ff6600' }
+            ];
+
             function addParticle() {
+                // 检查是否达到最大数量限制
+                if (activeParticles.size >= CONFIG.MAX_PARTICLES) {
+                    return; // 达到限制，跳过创建
+                }
                 const particle = document.createElement('div');
-                particle.className = 'particle';
+
+                // 随机选择粒子类型、大小和颜色
+                const type = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                const size = 2 + Math.random() * 6; // 2px-8px
+                const colors = particleColors[Math.floor(Math.random() * particleColors.length)];
+
+                particle.className = `particle ${type}`;
                 particle.style.left = Math.random() * 100 + '%';
                 particle.style.top = Math.random() * 100 + '%';
+                particle.style.setProperty('--size', size + 'px');
+                particle.style.setProperty('--color1', colors.color1);
+                particle.style.setProperty('--color2', colors.color2);
                 particle.style.setProperty('--delay', '0s');
-                
+
                 container.appendChild(particle);
+                activeParticles.add(particle); // 添加到活跃粒子集合
                 
                 setTimeout(() => {
                     particle.remove();
+                    activeParticles.delete(particle); // 从活跃粒子集合中移除
                 }, 3000);
             }
             
-            setInterval(addParticle, 100);
+            animationManager.add('particles', addParticle, CONFIG.PARTICLE_INTERVAL);
+            // 临时调试
+            setInterval(addParticle, CONFIG.PARTICLE_INTERVAL);
         }
         
         // 创建速度线
         function createSpeedLines() {
             const container = document.getElementById('speedLines');
-            
+            const activeSpeedLines = new Set(); // 跟踪活跃速度线
+
             function addLine() {
+                // 检查是否达到最大数量限制
+                if (activeSpeedLines.size >= CONFIG.MAX_SPEED_LINES) {
+                    return; // 达到限制，跳过创建
+                }
                 const line = document.createElement('div');
                 line.className = 'speed-line';
                 line.style.left = Math.random() * 100 + '%';
                 line.style.height = 50 + Math.random() * 100 + 'px';
                 line.style.animationDuration = 0.3 + Math.random() * 0.4 + 's';
                 line.style.opacity = 0.1 + Math.random() * 0.3;
-                
+
                 container.appendChild(line);
+                activeSpeedLines.add(line); // 添加到活跃速度线集合
                 
                 setTimeout(() => {
                     line.remove();
+                    activeSpeedLines.delete(line); // 从活跃速度线集合中移除
                 }, 1000);
             }
             
-            setInterval(addLine, 50);
+            animationManager.add('speedLines', addLine, CONFIG.SPEED_LINE_INTERVAL);
         }
         
         // 初始化
@@ -494,6 +710,9 @@
         createFlyingText();
         createParticles();
         createSpeedLines();
+
+        // 启动动画管理器
+        animationManager.start();
         
         // 添加鼠标移动视差效果
         document.addEventListener('mousemove', (e) => {
